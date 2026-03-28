@@ -45,6 +45,11 @@ Views are SwiftUI structs. ViewModels are `@Observable` classes that hold form s
 
 Navigation uses `NavigationStack` with a `Destination` enum. Deep link scheme: `days://add`, `days://countdown/<uuid>`, `days://occasion/<uuid>`. Routing lives in `DaysApp.swift`.
 
-### Widget
+### Widgets (`DaysWidget/`)
 
-`DaysWidget/Provider.swift` implements `AppIntentTimelineProvider`, fetching directly from the shared SwiftData store. `SelectDayIntent` + `EntityQuery` powers widget configuration (pick a specific countdown/occasion).
+Two widgets are defined in `DaysWidgetBundle.swift`:
+
+- **UpcomingDaysWidget** — shows nearest event(s); small (1 event) and medium (2 events) families. Uses `UpcomingDaysProvider` (plain `TimelineProvider`).
+- **PinnedDayWidget** — shows a single user-configured event; small only. Uses `PinnedDayProvider` (`AppIntentTimelineProvider`) with `PinnedEventIntent`.
+
+**Data flow:** `WidgetDataProvider.loadSnapshots()` fetches from the shared SwiftData container and returns `[DaySnapshot]`. `WidgetSelection` picks which snapshots to display. `DayEntity` / `DayEntityQuery` in `PinnedDayIntent.swift` power the widget configuration UI (user picks which event to pin).
