@@ -24,12 +24,12 @@ struct DaySnapshot: Identifiable, Codable {
 
 struct DayEntry: TimelineEntry {
     let date: Date
-    let upcomingDays: [DaySnapshot]
+    let snapshots: [DaySnapshot]
     let selectedDayID: UUID?
     
-    init(date: Date, upcomingDays: [DaySnapshot], selectedDayID: UUID? = nil) {
+    init(date: Date, snapshots: [DaySnapshot], selectedDayID: UUID? = nil) {
         self.date = date
-        self.upcomingDays = upcomingDays
+        self.snapshots = snapshots
         self.selectedDayID = selectedDayID
     }
 }

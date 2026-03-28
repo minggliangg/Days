@@ -11,6 +11,7 @@ import SwiftUI
 @main
 struct DaysWidgetBundle: WidgetBundle {
     var body: some Widget {
-        DaysWidget()
+        UpcomingDaysWidget()
+        PinnedDayWidget()
     }
 }

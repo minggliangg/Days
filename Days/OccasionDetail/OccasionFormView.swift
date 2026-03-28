@@ -56,22 +56,59 @@ struct OccasionFormView: View {
                 .labelsHidden()
             }
 
-            Section(header: Text("Age / Year Number")) {
-                Picker("Mode", selection: $viewModel.iterationMode) {
-                    Text("I know the year").tag(OccasionFormViewModel.IterationMode.derived)
-                    Text("I know the #").tag(OccasionFormViewModel.IterationMode.manual)
+            Section {
+                HStack(spacing: 0) {
+                    IterationModePill(
+                        title: viewModel.occasionType == .birthday
+                            ? "I know the year"
+                            : "I know the start year",
+                        isSelected: viewModel.iterationMode == .derived
+                    ) {
+                        viewModel.iterationMode = .derived
+                    }
+
+                    IterationModePill(
+                        title: viewModel.occasionType == .birthday
+                            ? "I know the age"
+                            : "I know the #",
+                        isSelected: viewModel.iterationMode == .manual
+                    ) {
+                        viewModel.iterationMode = .manual
+                    }
                 }
-                .pickerStyle(.segmented)
+                .padding(3)
+                .background {
+                    Capsule()
+                        .fill(.quaternary)
+                }
+                .listRowSeparator(.hidden)
 
                 if viewModel.iterationMode == .manual {
-                    Stepper(
-                        viewModel.occasionType == .birthday
-                            ? "They will be turning \(viewModel.manualIteration)"
-                            : "\(viewModel.manualIteration)\(ordinalString(for: viewModel.manualIteration)) anniversary",
-                        value: $viewModel.manualIteration,
-                        in: 1...200
-                    )
+                    VStack(spacing: 10) {
+                        TextField(
+                            "Number",
+                            text: $viewModel.manualIterationText
+                        )
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.center)
+                        .font(.system(.title2, design: .rounded, weight: .semibold))
+                        .textFieldStyle(.plain)
+                        .padding(.vertical, 8)
+                        .onSubmit {
+                            viewModel.commitManualIterationText()
+                        }
+
+                        Text(
+                            viewModel.occasionType == .birthday
+                                ? "They will be turning \(viewModel.manualIteration)"
+                                : "\(viewModel.manualIteration)\(ordinalString(for: viewModel.manualIteration)) anniversary"
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    }
                 }
+            } header: {
+                Text(viewModel.occasionType == .birthday ? "Age" : "Year Number")
             }
 
             Section(header: Text("Icon")) {
@@ -131,6 +168,13 @@ struct OccasionFormView: View {
                 .disabled(!viewModel.isValid)
                 .accessibilityIdentifier(viewModel.isEditing ? "save_button" : "add_button")
             }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    viewModel.commitManualIterationText()
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }
+            }
         }
         .sheet(isPresented: $showCategoryPicker) {
             CategoryPickerView(selectedCategory: $viewModel.selectedCategory)
@@ -142,6 +186,29 @@ struct OccasionFormView: View {
             }
             .presentationDetents([.medium, .large])
         }
+    }
+}
+
+private struct IterationModePill: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(isSelected ? .white : .secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background {
+                    if isSelected {
+                        Capsule()
+                            .fill(.tint)
+                    }
+                }
+        }
+        .buttonStyle(.plain)
     }
 }
 

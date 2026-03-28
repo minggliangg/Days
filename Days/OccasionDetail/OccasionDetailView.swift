@@ -66,6 +66,11 @@ private struct OccasionSummaryBadge: View {
                 personName: personName,
                 iterationLabel: iterationLabel
             )
+        } else {
+            OccasionSummaryCard(
+                personName: nil,
+                iterationLabel: iterationLabel
+            )
         }
     }
 }
@@ -120,7 +125,7 @@ private struct OccasionCountdownContent<SupplementaryContent: View>: View {
 }
 
 private struct OccasionSummaryCard: View {
-    let personName: String
+    let personName: String?
     let iterationLabel: String
 
     var body: some View {
@@ -140,20 +145,26 @@ private struct OccasionSummaryCard: View {
                         )
                         .frame(width: 42, height: 42)
 
-                    Image(systemName: "sparkles")
+                    Image(systemName: personName != nil ? "sparkles" : "calendar")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Color.orange.opacity(0.8))
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Celebrating")
+                    Text(personName != nil ? "Celebrating" : "Occasion")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(Color.orange.opacity(0.78))
                         .textCase(.uppercase)
 
-                    Text(personName)
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(.primary)
+                    if let personName {
+                        Text(personName)
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(.primary)
+                    } else {
+                        Text("Mark your calendar")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(.primary)
+                    }
                 }
 
                 Spacer(minLength: 0)
@@ -222,7 +233,7 @@ private func ordinalString(for number: Int) -> String {
     return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
 }
 
-#Preview {
+#Preview("With Person Name") {
     @Previewable @State var viewModel: HomeViewModel? = nil
     NavigationStack {
         if let viewModel {
@@ -234,6 +245,35 @@ private func ordinalString(for number: Int) -> String {
                     month: 6,
                     day: 15,
                     startYear: 1990
+                ),
+                viewModel: viewModel
+            )
+        }
+    }
+    .modelContainer(for: [Countdown.self, Category.self, Occasion.self], inMemory: true)
+    .onAppear {
+        if viewModel == nil {
+            do {
+                viewModel = HomeViewModel(modelContext: ModelContext(try .init(for: Countdown.self, Category.self, Occasion.self)))
+            } catch {
+                print("Failed to create model context")
+            }
+        }
+    }
+}
+
+#Preview("Without Person Name") {
+    @Previewable @State var viewModel: HomeViewModel? = nil
+    NavigationStack {
+        if let viewModel {
+            OccasionDetailView(
+                occasion: Occasion(
+                    title: "Anniversary",
+                    occasionType: .anniversary,
+                    personName: nil,
+                    month: 3,
+                    day: 22,
+                    startYear: 2015
                 ),
                 viewModel: viewModel
             )

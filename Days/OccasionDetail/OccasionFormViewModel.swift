@@ -10,7 +10,7 @@ import SwiftUI
 @Observable
 final class OccasionFormViewModel {
     private let modelContext: ModelContext
-    private let occasion: Occasion?
+    private let editingOccasionID: PersistentIdentifier?
     private weak var navigationViewModel: HomeViewModel?
 
     var title: String
@@ -19,6 +19,7 @@ final class OccasionFormViewModel {
     var selectedDate: Date
     var iterationMode: IterationMode
     var manualIteration: Int
+    var manualIterationText: String
     var iconName: String?
     var selectedCategory: Category?
 
@@ -32,7 +33,7 @@ final class OccasionFormViewModel {
     }
 
     var isEditing: Bool {
-        occasion != nil
+        editingOccasionID != nil
     }
 
     init(
@@ -41,7 +42,7 @@ final class OccasionFormViewModel {
         navigationViewModel: HomeViewModel
     ) {
         self.modelContext = modelContext
-        self.occasion = occasion
+        self.editingOccasionID = occasion?.persistentModelID
         self.navigationViewModel = navigationViewModel
 
         if let occasion = occasion {
@@ -57,6 +58,7 @@ final class OccasionFormViewModel {
             ) ?? occasion.nextOccurrenceDate
             self.iterationMode = .derived
             self.manualIteration = occasion.nextIteration
+            self.manualIterationText = "\(occasion.nextIteration)"
             self.iconName = occasion.iconName
             self.selectedCategory = occasion.category
         } else {
@@ -66,6 +68,7 @@ final class OccasionFormViewModel {
             self.selectedDate = Date()
             self.iterationMode = .derived
             self.manualIteration = 1
+            self.manualIterationText = "1"
             self.iconName = nil
             self.selectedCategory = nil
         }
@@ -75,8 +78,26 @@ final class OccasionFormViewModel {
         iconName = name
     }
 
+    func updateManualIteration(from text: String) {
+        if let value = Int(text), (1...200).contains(value) {
+            manualIteration = value
+            manualIterationText = text
+        } else if text.isEmpty {
+            manualIterationText = ""
+        }
+    }
+
+    func commitManualIterationText() {
+        if let value = Int(manualIterationText), (1...200).contains(value) {
+            manualIteration = value
+        }
+        manualIterationText = "\(manualIteration)"
+    }
+
     func save() {
         guard isValid else { return }
+
+        commitManualIterationText()
 
         let calendar = Calendar.current
         let month = calendar.component(.month, from: selectedDate)
@@ -100,7 +121,8 @@ final class OccasionFormViewModel {
             startYear = nextOccurrenceYear - manualIteration
         }
 
-        if let occasion = occasion {
+        if let editingOccasionID = editingOccasionID,
+           let occasion = modelContext.model(for: editingOccasionID) as? Occasion {
             occasion.title = title
             occasion.occasionType = occasionType
             occasion.personName = personName
