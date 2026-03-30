@@ -12,6 +12,7 @@ struct CountdownFormView: View {
     @Bindable var viewModel: CountdownFormViewModel
     @State private var showCategoryPicker = false
     @State private var showIconPicker = false
+    @State private var showCameraUnavailableAlert = false
     var countdown: Countdown? { nil }
 
     var body: some View {
@@ -43,6 +44,14 @@ struct CountdownFormView: View {
                     }
                 }
             }
+
+            ImagePickerSection(
+                selectedImage: $viewModel.selectedImage,
+                existingImage: viewModel.existingImage,
+                onImageSelected: viewModel.selectImage,
+                onImageRemoved: viewModel.removeImage,
+                onCameraUnavailable: { showCameraUnavailableAlert = true }
+            )
 
             Section(header: Text("Category")) {
                 Button {
@@ -132,6 +141,11 @@ struct CountdownFormView: View {
                 viewModel.selectIcon(selected)
             }
             .presentationDetents([.medium, .large])
+        }
+        .alert("Camera Unavailable", isPresented: $showCameraUnavailableAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("This device does not have an available camera. Choose a photo from your library or files instead.")
         }
         .onChange(of: viewModel.recurringIntervalType) { _, new in
             if new != .annually { viewModel.occasionType = nil }

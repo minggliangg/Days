@@ -6,6 +6,7 @@
 import Foundation
 import SwiftData
 import SwiftUI
+import UIKit
 
 @Observable
 final class OccasionFormViewModel {
@@ -22,6 +23,10 @@ final class OccasionFormViewModel {
     var manualIterationText: String
     var iconName: String?
     var selectedCategory: Category?
+    var selectedImage: UIImage?
+    var existingImagePath: String?
+    var existingImage: UIImage?
+    var imageRemoved: Bool = false
 
     enum IterationMode {
         case derived
@@ -61,6 +66,8 @@ final class OccasionFormViewModel {
             self.manualIterationText = "\(occasion.nextIteration)"
             self.iconName = occasion.iconName
             self.selectedCategory = occasion.category
+            self.existingImagePath = occasion.imagePath
+            self.existingImage = ImageManager.loadImage(relativePath: occasion.imagePath)
         } else {
             self.title = ""
             self.occasionType = .birthday
@@ -76,6 +83,18 @@ final class OccasionFormViewModel {
 
     func selectIcon(_ name: String?) {
         iconName = name
+    }
+
+    func selectImage(_ image: UIImage) {
+        selectedImage = image
+        existingImage = nil
+        imageRemoved = false
+    }
+
+    func removeImage() {
+        selectedImage = nil
+        existingImage = nil
+        imageRemoved = true
     }
 
     func updateManualIteration(from text: String) {
@@ -131,6 +150,17 @@ final class OccasionFormViewModel {
             occasion.startYear = startYear
             occasion.iconName = iconName
             occasion.category = selectedCategory
+
+            if imageRemoved {
+                ImageManager.deleteImage(forEventID: occasion.id)
+                occasion.imagePath = nil
+                imageRemoved = false
+            } else if let selectedImage {
+                if let newPath = ImageManager.processAndSave(image: selectedImage, forEventID: occasion.id) {
+                    occasion.imagePath = newPath
+                }
+            }
+
             navigationViewModel?.popAndNavigateToOccasionDetail(occasion)
         } else {
             let newOccasion = Occasion(
@@ -143,6 +173,11 @@ final class OccasionFormViewModel {
                 iconName: iconName,
                 category: selectedCategory
             )
+            if let selectedImage {
+                if let path = ImageManager.processAndSave(image: selectedImage, forEventID: newOccasion.id) {
+                    newOccasion.imagePath = path
+                }
+            }
             modelContext.insert(newOccasion)
             navigationViewModel?.pop()
         }

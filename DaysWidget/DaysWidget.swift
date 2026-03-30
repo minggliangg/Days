@@ -43,7 +43,7 @@ struct PinnedDayProvider: AppIntentTimelineProvider {
 
     func placeholder(in context: Context) -> DayEntry {
         DayEntry(date: .now, snapshots: [
-            DaySnapshot(id: UUID(), kind: .occasion, name: "Anniversary", targetDate: .now.addingTimeInterval(86400 * 3), includeTime: false, iconName: "heart")
+            DaySnapshot(id: UUID(), kind: .occasion, name: "Anniversary", targetDate: .now.addingTimeInterval(86400 * 3), includeTime: false, iconName: "heart", imagePath: nil)
         ])
     }
 

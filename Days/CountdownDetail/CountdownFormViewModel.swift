@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 import SwiftUI
+import UIKit
 
 @Observable
 final class CountdownFormViewModel {
@@ -25,6 +26,10 @@ final class CountdownFormViewModel {
     var recurringCustomDays: Int
     var occasionType: OccasionType?
     var iconName: String?
+    var selectedImage: UIImage?
+    var existingImagePath: String?
+    var existingImage: UIImage?
+    var imageRemoved: Bool = false
 
     var isValid: Bool {
         !name.isEmpty
@@ -57,6 +62,8 @@ final class CountdownFormViewModel {
             self.recurringCustomDays = countdown.recurringCustomDays ?? 30
             self.occasionType = countdown.occasionType
             self.iconName = countdown.iconName
+            self.existingImagePath = countdown.imagePath
+            self.existingImage = ImageManager.loadImage(relativePath: countdown.imagePath)
         } else {
             self.name = ""
             self.targetDate = Date()
@@ -74,6 +81,18 @@ final class CountdownFormViewModel {
         iconName = name
     }
 
+    func selectImage(_ image: UIImage) {
+        selectedImage = image
+        existingImage = nil
+        imageRemoved = false
+    }
+
+    func removeImage() {
+        selectedImage = nil
+        existingImage = nil
+        imageRemoved = true
+    }
+
     func save() {
         guard isValid else { return }
 
@@ -87,6 +106,20 @@ final class CountdownFormViewModel {
             countdown.recurringCustomDays = recurringIntervalType == .custom ? recurringCustomDays : nil
             countdown.occasionType = showEventTypePicker ? occasionType : nil
             countdown.iconName = iconName
+
+            if imageRemoved {
+                if let id = countdown.id {
+                    ImageManager.deleteImage(forEventID: id)
+                }
+                countdown.imagePath = nil
+                imageRemoved = false
+            } else if let selectedImage {
+                let eventID = countdown.id ?? UUID()
+                if let newPath = ImageManager.processAndSave(image: selectedImage, forEventID: eventID) {
+                    if countdown.id == nil { countdown.id = eventID }
+                    countdown.imagePath = newPath
+                }
+            }
 
             if isRecurring && countdown.initialTargetDate == nil {
                 countdown.initialTargetDate = targetDate
@@ -107,6 +140,11 @@ final class CountdownFormViewModel {
             newCountdown.recurringCustomDays = recurringIntervalType == .custom ? recurringCustomDays : nil
             newCountdown.occasionType = showEventTypePicker ? occasionType : nil
             newCountdown.iconName = iconName
+            if let selectedImage {
+                if let path = ImageManager.processAndSave(image: selectedImage, forEventID: newCountdown.id ?? UUID()) {
+                    newCountdown.imagePath = path
+                }
+            }
             if isRecurring {
                 newCountdown.initialTargetDate = targetDate
             }

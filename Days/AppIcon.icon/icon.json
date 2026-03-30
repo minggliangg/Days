@@ -19,12 +19,35 @@
     {
       "layers" : [
         {
-          "blend-mode" : "normal",
-          "fill" : "none",
+          "blend-mode-specializations" : [
+            {
+              "value" : "plus-darker"
+            },
+            {
+              "appearance" : "tinted",
+              "value" : "normal"
+            }
+          ],
+          "fill-specializations" : [
+            {
+              "value" : "none"
+            },
+            {
+              "appearance" : "tinted",
+              "value" : "none"
+            }
+          ],
           "glass" : true,
           "image-name" : "1.png",
           "name" : "1",
-          "opacity" : 1
+          "opacity" : 1,
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
         }
       ],
       "shadow" : {
@@ -39,28 +62,43 @@
     {
       "layers" : [
         {
-          "blend-mode" : "hard-light",
-          "glass" : true,
+          "blend-mode-specializations" : [
+            {
+              "value" : "hard-light"
+            },
+            {
+              "appearance" : "tinted",
+              "value" : "normal"
+            }
+          ],
+          "fill-specializations" : [
+            {
+              "value" : "none"
+            },
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "solid" : "display-p3:0.64000,0.45809,0.31835,1.00000"
+              }
+            }
+          ],
+          "glass-specializations" : [
+            {
+              "value" : true
+            },
+            {
+              "appearance" : "tinted",
+              "value" : true
+            }
+          ],
+          "hidden" : false,
           "image-name" : "2.svg",
           "name" : "2",
           "position" : {
-            "scale" : 1,
+            "scale" : 1.48,
             "translation-in-points" : [
-              162,
-              -140
-            ]
-          }
-        },
-        {
-          "blend-mode" : "plus-darker",
-          "glass" : true,
-          "image-name" : "3.svg",
-          "name" : "3",
-          "position" : {
-            "scale" : 1,
-            "translation-in-points" : [
-              -162,
-              140
+              0,
+              0
             ]
           }
         }

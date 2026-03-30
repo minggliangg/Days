@@ -11,6 +11,7 @@ import SwiftData
 struct CountdownDetailView: View {
     @Bindable var countdown: Countdown
     var viewModel: HomeViewModel
+    @State private var loadedImage: UIImage?
 
     private var displayDate: String {
         let formatter = DateFormatter()
@@ -50,22 +51,47 @@ struct CountdownDetailView: View {
     }
 
     var body: some View {
-        CountdownContent(
-            iconName: countdown.iconName,
-            targetDate: countdown.targetDate,
-            includeTime: countdown.includeTime,
-            displayDate: displayDate
-        ) {
-            if countdown.isRecurring {
-                RecurringSummaryBadge(
-                    recurringText: recurringText,
-                    occurrenceDescription: occurrenceCount.map {
-                        occurrenceLabel(for: $0, occasionType: countdown.occasionType)
+        Group {
+            if let image = loadedImage {
+                ScrollView {
+                    ParallaxHeroImage(image: image)
+                    CountdownContent(
+                        iconName: countdown.iconName,
+                        targetDate: countdown.targetDate,
+                        includeTime: countdown.includeTime,
+                        displayDate: displayDate,
+                        showSpacers: false
+                    ) {
+                        if countdown.isRecurring {
+                            RecurringSummaryBadge(
+                                recurringText: recurringText,
+                                occurrenceDescription: occurrenceCount.map {
+                                    occurrenceLabel(for: $0, occasionType: countdown.occasionType)
+                                }
+                            )
+                        }
                     }
-                )
+                }
+            } else {
+                CountdownContent(
+                    iconName: countdown.iconName,
+                    targetDate: countdown.targetDate,
+                    includeTime: countdown.includeTime,
+                    displayDate: displayDate
+                ) {
+                    if countdown.isRecurring {
+                        RecurringSummaryBadge(
+                            recurringText: recurringText,
+                            occurrenceDescription: occurrenceCount.map {
+                                occurrenceLabel(for: $0, occasionType: countdown.occasionType)
+                            }
+                        )
+                    }
+                }
             }
         }
         .navigationTitle(countdown.name)
+        .background(Color(.systemBackground))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -76,10 +102,18 @@ struct CountdownDetailView: View {
                 }
             }
         }
+        .onAppear(perform: refreshLoadedImage)
+        .onChange(of: countdown.imagePath) { _, _ in
+            refreshLoadedImage()
+        }
     }
 
     private func navigateToEdit() {
         viewModel.navigateToEdit(countdown)
+    }
+
+    private func refreshLoadedImage() {
+        loadedImage = ImageManager.loadImage(relativePath: countdown.imagePath)
     }
 }
 
@@ -110,6 +144,7 @@ private struct CountdownContent<SupplementaryContent: View>: View {
     let targetDate: Date
     let includeTime: Bool
     let displayDate: String
+    let showSpacers: Bool
     @ViewBuilder let supplementaryContent: SupplementaryContent
 
     init(
@@ -117,18 +152,20 @@ private struct CountdownContent<SupplementaryContent: View>: View {
         targetDate: Date,
         includeTime: Bool,
         displayDate: String,
+        showSpacers: Bool = true,
         @ViewBuilder supplementaryContent: () -> SupplementaryContent
     ) {
         self.iconName = iconName
         self.targetDate = targetDate
         self.includeTime = includeTime
         self.displayDate = displayDate
+        self.showSpacers = showSpacers
         self.supplementaryContent = supplementaryContent()
     }
 
     var body: some View {
         VStack(spacing: 20) {
-            Spacer()
+            if showSpacers { Spacer() }
 
             if let iconName {
                 Image(systemName: iconName)
@@ -150,9 +187,9 @@ private struct CountdownContent<SupplementaryContent: View>: View {
 
             supplementaryContent
 
-            Spacer()
+            if showSpacers { Spacer() }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: showSpacers ? .infinity : nil)
         .padding()
     }
 }

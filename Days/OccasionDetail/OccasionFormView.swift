@@ -10,6 +10,7 @@ struct OccasionFormView: View {
     @Bindable var viewModel: OccasionFormViewModel
     @State private var showCategoryPicker = false
     @State private var showIconPicker = false
+    @State private var showCameraUnavailableAlert = false
 
     var body: some View {
         Form {
@@ -133,6 +134,14 @@ struct OccasionFormView: View {
                 }
             }
 
+            ImagePickerSection(
+                selectedImage: $viewModel.selectedImage,
+                existingImage: viewModel.existingImage,
+                onImageSelected: viewModel.selectImage,
+                onImageRemoved: viewModel.removeImage,
+                onCameraUnavailable: { showCameraUnavailableAlert = true }
+            )
+
             Section(header: Text("Category")) {
                 Button {
                     showCategoryPicker = true
@@ -185,6 +194,11 @@ struct OccasionFormView: View {
                 viewModel.selectIcon(selected)
             }
             .presentationDetents([.medium, .large])
+        }
+        .alert("Camera Unavailable", isPresented: $showCameraUnavailableAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("This device does not have an available camera. Choose a photo from your library or files instead.")
         }
     }
 }

@@ -23,7 +23,8 @@ enum WidgetDataProvider {
                 name: countdown.name,
                 targetDate: countdown.targetDate,
                 includeTime: countdown.includeTime,
-                iconName: countdown.iconName
+                iconName: countdown.iconName,
+                imagePath: countdown.imagePath
             )
         }
 
@@ -35,7 +36,8 @@ enum WidgetDataProvider {
                 name: occasion.title,
                 targetDate: occasion.nextOccurrenceDate,
                 includeTime: false,
-                iconName: occasion.iconName
+                iconName: occasion.iconName,
+                imagePath: occasion.imagePath
             )
         }
 

@@ -22,7 +22,8 @@ struct UpcomingDaysProvider: TimelineProvider {
                     name: "Example Event",
                     targetDate: .now.addingTimeInterval(86400 * 7),
                     includeTime: false,
-                    iconName: nil
+                    iconName: nil,
+                    imagePath: nil
                 )
             ]
         )

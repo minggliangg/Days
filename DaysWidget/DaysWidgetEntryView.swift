@@ -21,7 +21,23 @@ struct UpcomingDaysWidgetEntryView: View {
                 UpcomingSmallView(entry: entry)
             }
         }
-        .containerBackground(.thinMaterial, for: .widget)
+        .containerBackground(for: .widget) {
+            if let snapshot = WidgetSelection.nearestItem(from: entry.snapshots, now: entry.date),
+               let image = WidgetImageLoader.loadThumbnail(forImagePath: snapshot.imagePath) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .overlay {
+                        LinearGradient(
+                            colors: [.black.opacity(0.3), .black.opacity(0.6)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    }
+            } else {
+                Color.clear
+            }
+        }
     }
 }
 
@@ -30,7 +46,23 @@ struct PinnedDayWidgetEntryView: View {
 
     var body: some View {
         PinnedSmallView(entry: entry)
-            .containerBackground(.thinMaterial, for: .widget)
+            .containerBackground(for: .widget) {
+                if let snapshot = WidgetSelection.pinnedItem(from: entry.snapshots, selectedID: entry.selectedDayID),
+                   let image = WidgetImageLoader.loadThumbnail(forImagePath: snapshot.imagePath) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .overlay {
+                            LinearGradient(
+                                colors: [.black.opacity(0.3), .black.opacity(0.6)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        }
+                } else {
+                    Color.clear
+                }
+            }
     }
 }
 
@@ -39,20 +71,21 @@ struct PinnedDayWidgetEntryView: View {
 private struct IconCircle: View {
     let iconName: String?
     let size: CGFloat
+    var useLightStyle: Bool = false
 
     var body: some View {
         ZStack {
             Circle()
-                .fill(.secondary.opacity(0.1))
+                .fill(useLightStyle ? .white.opacity(0.2) : .secondary.opacity(0.1))
                 .frame(width: size, height: size)
             if let iconName {
                 Image(systemName: iconName)
                     .font(.system(size: size * 0.4, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(useLightStyle ? .white : .secondary)
             } else {
                 Image(systemName: "circle.fill")
                     .font(.system(size: size * 0.22, weight: .semibold))
-                    .foregroundStyle(.secondary.opacity(0.5))
+                    .foregroundStyle(useLightStyle ? .white.opacity(0.5) : .secondary.opacity(0.5))
             }
         }
     }
@@ -128,21 +161,25 @@ private struct UpcomingSmallView: View {
 private struct SmallContentView: View {
     let snapshot: DaySnapshot
 
+    private var hasImage: Bool {
+        snapshot.imagePath != nil && WidgetImageLoader.loadThumbnail(forImagePath: snapshot.imagePath) != nil
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
-                IconCircle(iconName: snapshot.iconName, size: 32)
+                IconCircle(iconName: snapshot.iconName, size: 32, useLightStyle: hasImage)
                 Text(snapshot.name)
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(2)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(hasImage ? .white : .primary)
             }
 
             Spacer(minLength: 8)
 
             Text(CountdownHelper.formatCountdown(to: snapshot.targetDate, includeTime: snapshot.includeTime))
                 .font(.system(.title, design: .rounded, weight: .bold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(hasImage ? .white : .primary)
                 .widgetAccentable()
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
@@ -150,7 +187,7 @@ private struct SmallContentView: View {
 
             Text(snapshot.targetDate.formatted(date: .abbreviated, time: .omitted))
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(hasImage ? .white.opacity(0.8) : .secondary)
                 .padding(.top, 2)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -165,6 +202,13 @@ private struct UpcomingMediumView: View {
 
     private var snapshots: [DaySnapshot] {
         WidgetSelection.upcomingItems(from: entry.snapshots, now: entry.date, limit: 2)
+    }
+
+    private var backgroundImageAvailable: Bool {
+        guard let snapshot = WidgetSelection.nearestItem(from: entry.snapshots, now: entry.date) else {
+            return false
+        }
+        return WidgetImageLoader.loadThumbnail(forImagePath: snapshot.imagePath) != nil
     }
 
     var body: some View {
@@ -195,31 +239,44 @@ private struct UpcomingMediumView: View {
                 .padding(.vertical, 8)
             }
         }
+        .environment(\.daysWidgetUsesLightText, backgroundImageAvailable)
+    }
+}
+
+private struct DaysWidgetUsesLightTextKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+private extension EnvironmentValues {
+    var daysWidgetUsesLightText: Bool {
+        get { self[DaysWidgetUsesLightTextKey.self] }
+        set { self[DaysWidgetUsesLightTextKey.self] = newValue }
     }
 }
 
 private struct MediumRowView: View {
     let snapshot: DaySnapshot
+    @Environment(\.daysWidgetUsesLightText) private var usesLightText
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            IconCircle(iconName: snapshot.iconName, size: 38)
+            IconCircle(iconName: snapshot.iconName, size: 38, useLightStyle: usesLightText)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(snapshot.name)
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(usesLightText ? .white : .primary)
                 Text(snapshot.targetDate.formatted(date: .abbreviated, time: .omitted))
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(usesLightText ? .white.opacity(0.8) : .secondary)
             }
 
             Spacer(minLength: 4)
 
             Text(CountdownHelper.formatCountdown(to: snapshot.targetDate, includeTime: snapshot.includeTime))
                 .font(.system(.title3, design: .rounded, weight: .bold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(usesLightText ? .white : .primary)
                 .widgetAccentable()
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
@@ -269,9 +326,9 @@ private func deepLinkURL(for day: DaySnapshot) -> URL {
 private let previewMixedEntry = DayEntry(
     date: .now,
     snapshots: [
-        DaySnapshot(id: UUID(), kind: .countdown, name: "Birthday", targetDate: .now.addingTimeInterval(86400 * 5), includeTime: false, iconName: "birthday.cake"),
-        DaySnapshot(id: UUID(), kind: .occasion, name: "Anniversary", targetDate: .now.addingTimeInterval(86400 * 14), includeTime: false, iconName: "heart"),
-        DaySnapshot(id: UUID(), kind: .occasion, name: "Anniversary", targetDate: .now.addingTimeInterval(86400 * 14), includeTime: false, iconName: "heart")
+        DaySnapshot(id: UUID(), kind: .countdown, name: "Birthday", targetDate: .now.addingTimeInterval(86400 * 5), includeTime: false, iconName: "birthday.cake", imagePath: nil),
+        DaySnapshot(id: UUID(), kind: .occasion, name: "Anniversary", targetDate: .now.addingTimeInterval(86400 * 14), includeTime: false, iconName: "heart", imagePath: nil),
+        DaySnapshot(id: UUID(), kind: .occasion, name: "Anniversary", targetDate: .now.addingTimeInterval(86400 * 14), includeTime: false, iconName: "heart", imagePath: nil)
     ]
 )
 

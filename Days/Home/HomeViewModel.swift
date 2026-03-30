@@ -27,11 +27,15 @@ final class HomeViewModel {
     }
 
     func deleteCountdown(_ countdown: Countdown) {
+        if let id = countdown.id {
+            ImageManager.deleteImage(forEventID: id)
+        }
         modelContext.delete(countdown)
         SharedModelContainer.refreshWidgets()
     }
 
     func deleteOccasion(_ occasion: Occasion) {
+        ImageManager.deleteImage(forEventID: occasion.id)
         modelContext.delete(occasion)
         SharedModelContainer.refreshWidgets()
     }

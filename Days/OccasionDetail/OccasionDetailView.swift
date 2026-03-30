@@ -9,6 +9,7 @@ import SwiftData
 struct OccasionDetailView: View {
     @Bindable var occasion: Occasion
     var viewModel: HomeViewModel
+    @State private var loadedImage: UIImage?
 
     private var displayDate: String {
         let formatter = DateFormatter()
@@ -28,17 +29,37 @@ struct OccasionDetailView: View {
     }
 
     var body: some View {
-        OccasionCountdownContent(
-            iconName: occasion.iconName,
-            targetDate: occasion.nextOccurrenceDate,
-            displayDate: displayDate
-        ) {
-            OccasionSummaryBadge(
-                personName: occasion.personName,
-                iterationLabel: iterationLabel
-            )
+        Group {
+            if let image = loadedImage {
+                ScrollView {
+                    ParallaxHeroImage(image: image)
+                    OccasionCountdownContent(
+                        iconName: occasion.iconName,
+                        targetDate: occasion.nextOccurrenceDate,
+                        displayDate: displayDate,
+                        showSpacers: false
+                    ) {
+                        OccasionSummaryBadge(
+                            personName: occasion.personName,
+                            iterationLabel: iterationLabel
+                        )
+                    }
+                }
+            } else {
+                OccasionCountdownContent(
+                    iconName: occasion.iconName,
+                    targetDate: occasion.nextOccurrenceDate,
+                    displayDate: displayDate
+                ) {
+                    OccasionSummaryBadge(
+                        personName: occasion.personName,
+                        iterationLabel: iterationLabel
+                    )
+                }
+            }
         }
         .navigationTitle(occasion.title)
+        .background(Color(.systemBackground))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -49,10 +70,18 @@ struct OccasionDetailView: View {
                 }
             }
         }
+        .onAppear(perform: refreshLoadedImage)
+        .onChange(of: occasion.imagePath) { _, _ in
+            refreshLoadedImage()
+        }
     }
 
     private func navigateToEdit() {
         viewModel.navigateToOccasionEdit(occasion)
+    }
+
+    private func refreshLoadedImage() {
+        loadedImage = ImageManager.loadImage(relativePath: occasion.imagePath)
     }
 }
 
@@ -79,23 +108,26 @@ private struct OccasionCountdownContent<SupplementaryContent: View>: View {
     let iconName: String?
     let targetDate: Date
     let displayDate: String
+    let showSpacers: Bool
     @ViewBuilder let supplementaryContent: SupplementaryContent
 
     init(
         iconName: String?,
         targetDate: Date,
         displayDate: String,
+        showSpacers: Bool = true,
         @ViewBuilder supplementaryContent: () -> SupplementaryContent
     ) {
         self.iconName = iconName
         self.targetDate = targetDate
         self.displayDate = displayDate
+        self.showSpacers = showSpacers
         self.supplementaryContent = supplementaryContent()
     }
 
     var body: some View {
         VStack(spacing: 20) {
-            Spacer()
+            if showSpacers { Spacer() }
 
             if let iconName {
                 Image(systemName: iconName)
@@ -117,9 +149,9 @@ private struct OccasionCountdownContent<SupplementaryContent: View>: View {
 
             supplementaryContent
 
-            Spacer()
+            if showSpacers { Spacer() }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: showSpacers ? .infinity : nil)
         .padding()
     }
 }

@@ -20,6 +20,7 @@ struct DaySnapshot: Identifiable, Codable {
     let targetDate: Date
     let includeTime: Bool
     let iconName: String?
+    let imagePath: String?
 }
 
 struct DayEntry: TimelineEntry {

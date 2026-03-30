@@ -16,6 +16,7 @@ final class Occasion {
     var day: Int
     var startYear: Int
     var iconName: String?
+    var imagePath: String?
 
     @Relationship(deleteRule: .nullify)
     var category: Category?

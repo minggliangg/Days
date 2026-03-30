@@ -21,6 +21,7 @@ final class Countdown {
     var recurringCustomDays: Int?
     var initialTargetDate: Date?
     var eventTypeRawValue: String?
+    var imagePath: String?
 
     var occasionType: OccasionType? {
         get { eventTypeRawValue.flatMap(OccasionType.init(rawValue:)) }
